@@ -1,0 +1,47 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
+
+  docker-image:
+    needs: build-test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Docker image
+      run: docker build -t supplychainapi .
+
+  deploy-staging:
+    if: github.ref == 'refs/heads/develop'
+    needs: docker-image
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to Staging (instrução/mensagem ou ação real)
+      run: echo "Deploy to Staging"
+
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    needs: docker-image
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to Production (instrução/mensagem ou ação real)
+      run: echo "Deploy to Production"
